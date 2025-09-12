@@ -2,7 +2,7 @@ import asyncio
 
 from pydantic import BaseModel, Field
 
-from limin import Tool, generate_tool_call_completion
+from limin import Tool, generate_completion, ModelConfiguration
 
 
 class GetWeatherParameters(BaseModel):
@@ -17,9 +17,14 @@ get_weather_tool = Tool(
 
 
 async def main():
-    completion = await generate_tool_call_completion(
+    model_configuration = ModelConfiguration(
+        model="gpt-4o",
+        temperature=0.7,
+        tools=[get_weather_tool]
+    )
+    completion = await generate_completion(
         "What's the weather like in Paris today?",
-        get_weather_tool,
+        model_configuration=model_configuration
     )
     print(completion)
 

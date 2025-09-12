@@ -1,6 +1,6 @@
 import asyncio
 from pydantic import BaseModel
-from limin import generate_structured_completion
+from limin import generate_completion
 
 
 # Note that you need to create a pydantic model containing the expected completion
@@ -9,7 +9,7 @@ class CapitalModel(BaseModel):
 
 
 async def main():
-    completion = await generate_structured_completion(
+    completion = await generate_completion(
         "What is the capital of France?",
         response_model=CapitalModel,
     )

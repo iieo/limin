@@ -25,3 +25,8 @@ include = ["limin*"]
 
 [tool.mypy]
 files = "limin/"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+]

@@ -27,11 +27,11 @@ def _check_tools(tools: list[Tool]) -> None:
             f"Tools must have unique names. Duplicate names: {duplicate_names}"
         )
 
+
 class Agent:
     def __init__(
         self,
         system_prompt: str,
-        tools: list[Tool],
         model_configuration: ModelConfiguration,
     ):
         self.model_configuration = model_configuration
@@ -39,8 +39,8 @@ class Agent:
         self.conversation = Conversation()
         self.conversation.add_message(SystemMessage(content=system_prompt))
 
-        _check_tools(tools)
-        self.tools = tools
+        _check_tools(model_configuration.tools)
+        self.tools = model_configuration.tools
 
     async def process(self, user_message: str) -> list[Message]:
         messages = []
@@ -51,7 +51,6 @@ class Agent:
         while len(self.tools) > 0:
             tool_call_completion = await generate_completion_for_conversation(
                 self.conversation,
-                tools=self.tools,
                 model_configuration=self.model_configuration,
             )
 

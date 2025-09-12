@@ -15,7 +15,7 @@ class Completion(BaseModel, Generic[T]):
     end_time: float
     conversation: Conversation
     tool_calls: list[ToolCall]
-    full_token_log_probs: list[list[TokenLogProb]]
+    full_token_log_probs: list[list[TokenLogProb]] | None = None
 
     @property
     def duration(self) -> float:

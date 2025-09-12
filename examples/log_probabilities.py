@@ -1,5 +1,5 @@
 import asyncio
-from limin import generate_text_completion, ModelConfiguration
+from limin import generate_completion, ModelConfiguration
 
 
 async def main():
@@ -8,7 +8,7 @@ async def main():
         log_probs=True,
         top_log_probs=10,
     )
-    completion = await generate_text_completion(
+    completion = await generate_completion(
         "What is 2+2?",
         model_configuration=model_configuration,
     )

@@ -2,6 +2,7 @@ import asyncio
 import json
 import time
 from openai import AsyncOpenAI
+from typing import Type, TypeVar
 from .base.completion import Completion
 from tqdm import tqdm
 from .base import (
@@ -14,10 +15,13 @@ from .base import (
     parse_logprobs,
 )
 
+T = TypeVar("T")
+
 
 async def generate_completion_for_conversation(
     conversation: Conversation,
     model_configuration: ModelConfiguration | None = None,
+    response_model: Type[T] | None = None,
 ) -> Completion:
     """Generate a tool call completion from a conversation.
 
@@ -35,7 +39,7 @@ async def generate_completion_for_conversation(
     if model_configuration is None:
         model_configuration = DEFAULT_MODEL_CONFIGURATION
 
-    tools = model_configuration.tool
+    tools = model_configuration.tools
     if isinstance(tools, Tool):
         tools = [tools]
 
@@ -47,31 +51,50 @@ async def generate_completion_for_conversation(
     openai_tools = [tool.openai_tool for tool in tools]
 
     start_time = time.time()
-    completion = await client.chat.completions.create(
-        model=model_configuration.model,
-        messages=conversation.openai_messages,
-        temperature=model_configuration.temperature,
-        logprobs=model_configuration.log_probs,
-        top_logprobs=model_configuration.top_log_probs,
-        max_tokens=model_configuration.max_tokens,
-        presence_penalty=model_configuration.presence_penalty,
-        frequency_penalty=model_configuration.frequency_penalty,
-        top_p=model_configuration.top_p,
-        seed=model_configuration.seed,
-        tools=openai_tools,
-    )
+
+    if response_model is None:
+
+        completion = await client.chat.completions.create(
+            model=model_configuration.model,
+            messages=conversation.openai_messages,
+            temperature=model_configuration.temperature,
+            logprobs=model_configuration.log_probs,
+            top_logprobs=model_configuration.top_log_probs,
+            max_tokens=model_configuration.max_tokens,
+            presence_penalty=model_configuration.presence_penalty,
+            frequency_penalty=model_configuration.frequency_penalty,
+            top_p=model_configuration.top_p,
+            seed=model_configuration.seed,
+            tools=openai_tools,
+        )
+    else:
+        completion = await client.beta.chat.completions.parse(
+            model=model_configuration.model,
+            messages=conversation.openai_messages,
+            response_format=response_model,
+            temperature=model_configuration.temperature,
+            logprobs=model_configuration.log_probs,
+            top_logprobs=model_configuration.top_log_probs,
+            max_tokens=model_configuration.max_tokens,
+            presence_penalty=model_configuration.presence_penalty,
+            frequency_penalty=model_configuration.frequency_penalty,
+            top_p=model_configuration.top_p,
+            seed=model_configuration.seed,
+            tools=openai_tools,
+        )
     end_time = time.time()
 
     first_choice = get_first_element(completion.choices)
+
     if first_choice is None:
         raise ValueError("No choices returned from the completion.")
 
-    message_content = first_choice.message.content or first_choice.message.parsed
+    message_content = first_choice.message.content
+    if response_model is not None and hasattr(first_choice.message, 'parsed'):
+        message_content = first_choice.message.parsed or message_content
 
-    if message_content is None:
-        raise ValueError("No message content returned from the completion.")
-
-    full_token_log_probs = parse_logprobs(first_choice)
+    full_token_log_probs = parse_logprobs(
+        first_choice) if first_choice.message.tool_calls is None else None
 
     openai_tool_calls = first_choice.message.tool_calls or []
 
@@ -98,6 +121,7 @@ async def generate_completion_for_conversation(
 async def generate_completion(
     user_prompt: str,
     system_prompt: str | None = None,
+    response_model: Type[T] | None = None,
     model_configuration: ModelConfiguration | None = None,
 ) -> Completion:
     """
@@ -123,12 +147,14 @@ async def generate_completion(
 
     return await generate_completion_for_conversation(
         conversation,
+        response_model=response_model,
         model_configuration=model_configuration,
     )
 
 
 async def generate_completions_for_conversations(
     conversations: list[Conversation],
+    response_model: Type[T] | None = None,
     model_configuration: ModelConfiguration | None = None,
     n_parallel: int = 5,
     show_progress: bool = True,
@@ -148,6 +174,7 @@ async def generate_completions_for_conversations(
                 generate_completion_for_conversation(
                     conversation,
                     model_configuration,
+                    response_model=response_model,
                 )
             )
             for conversation in conversations_batch
@@ -168,9 +195,9 @@ async def generate_completions_for_conversations(
 async def generate_completions(
     user_prompts: list[str],
     system_prompt: str | None = None,
-    tools: Tool | list[Tool] = [],
     n_parallel: int = 5,
     model_configuration: ModelConfiguration | None = None,
+    response_model: Type[T] | None = None,
     show_progress: bool = True,
 ) -> list[Completion]:
     conversations = [
@@ -182,5 +209,6 @@ async def generate_completions(
         conversations,
         n_parallel=n_parallel,
         model_configuration=model_configuration,
+        response_model=response_model,
         show_progress=show_progress,
     )

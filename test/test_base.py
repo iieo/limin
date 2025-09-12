@@ -2,9 +2,8 @@ import pytest
 
 from limin import (
     Conversation,
-    TextCompletion,
+    Completion,
     TokenLogProb,
-    StructuredCompletion,
     UserMessage,
     SystemMessage,
     AssistantMessage,
@@ -194,11 +193,14 @@ def test_conversation_from_prompts_user_assistant_system_prompt():
 
 
 def create_text_completion():
-    return TextCompletion(
+    conversation = Conversation()
+    return Completion(
         model="gpt-4o",
         content="Test content",
         start_time=100.0,
         end_time=105.5,
+        conversation=conversation,
+        tool_calls=[],
         full_token_log_probs=[
             [
                 TokenLogProb(token="Test", log_prob=-0.1),
@@ -213,11 +215,14 @@ def create_text_completion():
 
 
 def create_structured_completion():
-    return StructuredCompletion(
+    conversation = Conversation()
+    return Completion(
         model="gpt-4o",
         content={"key": "value"},
         start_time=100.0,
         end_time=107.0,
+        conversation=conversation,
+        tool_calls=[],
         full_token_log_probs=[
             [
                 TokenLogProb(token="{", log_prob=-0.1),
