@@ -7,8 +7,7 @@ from .base import (
     Message,
 )
 from .base import Conversation, ModelConfiguration
-from .text_completion import generate_text_completion_for_conversation
-from .tool_call import generate_tool_call_completion_for_conversation
+from .completion import generate_completion_for_conversation
 
 
 def _check_tools(tools: list[Tool]) -> None:
@@ -50,7 +49,7 @@ class Agent:
 
         # Keep calling tools until the agent doesn't want to call any more
         while len(self.tools) > 0:
-            tool_call_completion = await generate_tool_call_completion_for_conversation(
+            tool_call_completion = await generate_completion_for_conversation(
                 self.conversation,
                 tools=self.tools,
                 model_configuration=self.model_configuration,
@@ -83,7 +82,7 @@ class Agent:
                 messages.append(tool_message)
 
         # Generate a response from the model
-        text_completion = await generate_text_completion_for_conversation(
+        text_completion = await generate_completion_for_conversation(
             self.conversation,
             model_configuration=self.model_configuration,
         )

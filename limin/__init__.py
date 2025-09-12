@@ -15,27 +15,15 @@ from .base import (
     ToolCall,
     ModelConfiguration,
     DEFAULT_MODEL_CONFIGURATION,
-    StructuredCompletion,
-    TextCompletion,
+    Completion,
     Tool,
 )
 
-from .text_completion import (
-    generate_text_completion_for_conversation,
-    generate_text_completion,
-    generate_text_completions_for_conversations,
-    generate_text_completions,
-)
-
-from .structured_completion import (
-    generate_structured_completion_for_conversation,
-    generate_structured_completion,
-    generate_structured_completions_for_conversations,
-    generate_structured_completions,
-)
-
-from .tool_call import (
-    generate_tool_call_completion,
+from .completion import (
+    generate_completion_for_conversation,
+    generate_completion,
+    generate_completions_for_conversations,
+    generate_completions,
 )
 
 __all__ = [
@@ -56,21 +44,13 @@ __all__ = [
     "ToolCall",
     "ModelConfiguration",
     "DEFAULT_MODEL_CONFIGURATION",
-    "StructuredCompletion",
-    "TextCompletion",
+    "Completion",
     "Tool",
     # from text_completion
-    "generate_text_completion_for_conversation",
-    "generate_text_completion",
-    "generate_text_completions_for_conversations",
-    "generate_text_completions",
-    # from structured_completion
-    "generate_structured_completion_for_conversation",
-    "generate_structured_completion",
-    "generate_structured_completions_for_conversations",
-    "generate_structured_completions",
-    # from tool_call
-    "generate_tool_call_completion",
+    "generate_completion_for_conversation",
+    "generate_completion",
+    "generate_completions_for_conversations",
+    "generate_completions",
 ]
 
 __version__ = "0.9.1"

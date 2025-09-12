@@ -1,29 +1,24 @@
+import asyncio
 import json
 import time
 from openai import AsyncOpenAI
-
+from .base.completion import Completion
+from tqdm import tqdm
 from .base import (
     DEFAULT_MODEL_CONFIGURATION,
     Conversation,
     ModelConfiguration,
     Tool,
     ToolCall,
+    get_first_element,
+    parse_logprobs,
 )
-from pydantic import BaseModel
 
 
-class ToolCallCompletion(BaseModel):
-    conversation: Conversation
-    start_time: float
-    end_time: float
-    tool_calls: list[ToolCall]
-
-
-async def generate_tool_call_completion_for_conversation(
+async def generate_completion_for_conversation(
     conversation: Conversation,
-    tools: Tool | list[Tool],
     model_configuration: ModelConfiguration | None = None,
-) -> ToolCallCompletion:
+) -> Completion:
     """Generate a tool call completion from a conversation.
 
     This function sends the conversation to the OpenAI API with the provided tools,
@@ -40,6 +35,7 @@ async def generate_tool_call_completion_for_conversation(
     if model_configuration is None:
         model_configuration = DEFAULT_MODEL_CONFIGURATION
 
+    tools = model_configuration.tool
     if isinstance(tools, Tool):
         tools = [tools]
 
@@ -66,14 +62,18 @@ async def generate_tool_call_completion_for_conversation(
     )
     end_time = time.time()
 
-    openai_tool_calls = completion.choices[0].message.tool_calls
-    if openai_tool_calls is None:
-        return ToolCallCompletion(
-            conversation=conversation,
-            start_time=start_time,
-            end_time=end_time,
-            tool_calls=[],
-        )
+    first_choice = get_first_element(completion.choices)
+    if first_choice is None:
+        raise ValueError("No choices returned from the completion.")
+
+    message_content = first_choice.message.content or first_choice.message.parsed
+
+    if message_content is None:
+        raise ValueError("No message content returned from the completion.")
+
+    full_token_log_probs = parse_logprobs(first_choice)
+
+    openai_tool_calls = first_choice.message.tool_calls or []
 
     tool_calls = [
         ToolCall(
@@ -84,20 +84,22 @@ async def generate_tool_call_completion_for_conversation(
         for tool_call in openai_tool_calls
     ]
 
-    return ToolCallCompletion(
+    return Completion(
+        content=message_content,
+        model=model_configuration.model,
         conversation=conversation,
         start_time=start_time,
         end_time=end_time,
         tool_calls=tool_calls,
+        full_token_log_probs=full_token_log_probs,
     )
 
 
-async def generate_tool_call_completion(
+async def generate_completion(
     user_prompt: str,
-    tools: Tool | list[Tool],
     system_prompt: str | None = None,
     model_configuration: ModelConfiguration | None = None,
-) -> ToolCallCompletion:
+) -> Completion:
     """
     Generate a tool call completion for a user prompt.
 
@@ -116,10 +118,69 @@ async def generate_tool_call_completion(
     if model_configuration is None:
         model_configuration = DEFAULT_MODEL_CONFIGURATION
 
-    conversation = Conversation.from_prompts(user_prompt, system_prompt=system_prompt)
+    conversation = Conversation.from_prompts(
+        user_prompt, system_prompt=system_prompt)
 
-    return await generate_tool_call_completion_for_conversation(
+    return await generate_completion_for_conversation(
         conversation,
-        tools,
         model_configuration=model_configuration,
+    )
+
+
+async def generate_completions_for_conversations(
+    conversations: list[Conversation],
+    model_configuration: ModelConfiguration | None = None,
+    n_parallel: int = 5,
+    show_progress: bool = True,
+) -> list[Completion]:
+    completions = []
+
+    progress_bar = None
+
+    if show_progress:
+        progress_bar = tqdm(total=len(conversations))
+
+    for i in range(0, len(conversations), n_parallel):
+        conversations_batch = conversations[i: i + n_parallel]
+
+        tasks = [
+            asyncio.create_task(
+                generate_completion_for_conversation(
+                    conversation,
+                    model_configuration,
+                )
+            )
+            for conversation in conversations_batch
+        ]
+
+        completions_batch = await asyncio.gather(*tasks)
+        completions.extend(completions_batch)
+
+        if show_progress and progress_bar is not None:
+            progress_bar.update(len(completions_batch))
+
+    if show_progress and progress_bar is not None:
+        progress_bar.close()
+
+    return completions
+
+
+async def generate_completions(
+    user_prompts: list[str],
+    system_prompt: str | None = None,
+    tools: Tool | list[Tool] = [],
+    n_parallel: int = 5,
+    model_configuration: ModelConfiguration | None = None,
+    show_progress: bool = True,
+) -> list[Completion]:
+    conversations = [
+        Conversation.from_prompts(user_prompt, system_prompt=system_prompt)
+        for user_prompt in user_prompts
+    ]
+
+    return await generate_completions_for_conversations(
+        conversations,
+        n_parallel=n_parallel,
+        model_configuration=model_configuration,
+        show_progress=show_progress,
     )
