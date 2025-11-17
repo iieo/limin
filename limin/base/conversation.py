@@ -13,15 +13,13 @@ class Conversation(BaseModel):
 
         if last_message is None:
             if message.role == "assistant":
-                raise ValueError(
-                    "The first message must be a system or user message")
+                raise ValueError("The first message must be a system or user message")
 
             self.messages.append(message)
             return
 
         if last_message.role == "system" and message.role != "user":
-            raise ValueError(
-                "System message must be followed by a user message")
+            raise ValueError("System message must be followed by a user message")
 
         if last_message.role == "assistant" and message.role not in ["user", "tool"]:
             raise ValueError(
@@ -29,8 +27,7 @@ class Conversation(BaseModel):
             )
 
         if last_message.role == "user" and message.role != "assistant":
-            raise ValueError(
-                "User message must be followed by an assistant message")
+            raise ValueError("User message must be followed by an assistant message")
 
         self.messages.append(message)
 
@@ -53,8 +50,7 @@ class Conversation(BaseModel):
             # Reset color code
             reset_code = "\033[0m"
 
-            pretty_lines.append(
-                f"{color_code}{message.role.capitalize()}{reset_code}")
+            pretty_lines.append(f"{color_code}{message.role.capitalize()}{reset_code}")
 
             separator_length = len(message.role) + 2  # +2 for some extra space
             pretty_lines.append("-" * separator_length)
@@ -99,20 +95,17 @@ class Conversation(BaseModel):
                 if message.tool_calls:
                     output.append("\n**🔧 TOOL INVOCATIONS:**\n")
                     for tool_call in message.tool_calls:
-                        output.append(
-                            f"\n**Tool Called:** `{tool_call.name}`\n")
+                        output.append(f"\n**Tool Called:** `{tool_call.name}`\n")
                         output.append(f"- **Call ID:** `{tool_call.id}`\n")
                         output.append(f"- **Arguments Passed:**\n")
                         output.append("```json\n")
-                        output.append(json.dumps(
-                            tool_call.arguments, indent=2))
+                        output.append(json.dumps(tool_call.arguments, indent=2))
                         output.append("\n```\n")
                 output.append("\n")
 
             elif isinstance(message, ToolMessage):
                 output.append(f"### Tool Execution Result\n")
-                output.append(
-                    f"**Response for Call ID:** `{message.tool_call_id}`\n")
+                output.append(f"**Response for Call ID:** `{message.tool_call_id}`\n")
                 output.append(f"**Result:**\n```\n{message.content}\n```\n\n")
 
         return "".join(output)

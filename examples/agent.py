@@ -26,10 +26,8 @@ class GetCalculatorParameters(BaseModel):
     operation: str = Field(
         description="Operation to perform - with +, -, *, / (e.g. 2*2)"
     )
-    operator1: int = Field(
-        description="First number to perform the operation on")
-    operator2: int = Field(
-        description="Second number to perform the operation on")
+    operator1: int = Field(description="First number to perform the operation on")
+    operator2: int = Field(description="Second number to perform the operation on")
 
 
 def get_calculator_exec(operation: str, operator1: int, operator2: int) -> str:
@@ -57,7 +55,10 @@ get_calculator_tool = Tool(
 
 async def main():
     model_configuration = ModelConfiguration(
-        model="gpt-5-nano", temperature=1.0, tools=[get_weather_tool, get_calculator_tool])
+        model="gpt-5-nano",
+        temperature=1.0,
+        tools=[get_weather_tool, get_calculator_tool],
+    )
     agent = Agent(
         system_prompt="You are a helpful assistant.",
         model_configuration=model_configuration,

@@ -18,13 +18,11 @@ get_weather_tool = Tool(
 
 async def main():
     model_configuration = ModelConfiguration(
-        model="gpt-4o",
-        temperature=0.7,
-        tools=[get_weather_tool]
+        model="gpt-4o", temperature=0.7, tools=[get_weather_tool]
     )
     completion = await generate_completion(
         "What's the weather like in Paris today?",
-        model_configuration=model_configuration
+        model_configuration=model_configuration,
     )
     print(completion)
 

@@ -53,7 +53,6 @@ async def generate_completion_for_conversation(
     start_time = time.time()
 
     if response_model is None:
-
         completion = await client.chat.completions.create(
             model=model_configuration.model,
             messages=conversation.openai_messages,
@@ -90,11 +89,14 @@ async def generate_completion_for_conversation(
         raise ValueError("No choices returned from the completion.")
 
     message_content = first_choice.message.content
-    if response_model is not None and hasattr(first_choice.message, 'parsed'):
+    if response_model is not None and hasattr(first_choice.message, "parsed"):
         message_content = first_choice.message.parsed or message_content
 
-    full_token_log_probs = parse_logprobs(
-        first_choice) if first_choice.message.tool_calls is None else None
+    full_token_log_probs = (
+        parse_logprobs(first_choice)
+        if first_choice.message.tool_calls is None
+        else None
+    )
 
     openai_tool_calls = first_choice.message.tool_calls or []
 
@@ -142,8 +144,7 @@ async def generate_completion(
     if model_configuration is None:
         model_configuration = DEFAULT_MODEL_CONFIGURATION
 
-    conversation = Conversation.from_prompts(
-        user_prompt, system_prompt=system_prompt)
+    conversation = Conversation.from_prompts(user_prompt, system_prompt=system_prompt)
 
     return await generate_completion_for_conversation(
         conversation,
@@ -167,7 +168,7 @@ async def generate_completions_for_conversations(
         progress_bar = tqdm(total=len(conversations))
 
     for i in range(0, len(conversations), n_parallel):
-        conversations_batch = conversations[i: i + n_parallel]
+        conversations_batch = conversations[i : i + n_parallel]
 
         tasks = [
             asyncio.create_task(
