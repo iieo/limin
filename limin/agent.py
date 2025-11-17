@@ -10,7 +10,7 @@ from .base import Conversation, ModelConfiguration
 from .completion import generate_completion_for_conversation
 
 
-def _check_tools(tools: list[Tool]) -> None:
+def check_tools(tools: list[Tool]) -> None:
     tool_names = [tool.name for tool in tools]
     if len(tool_names) != len(set(tool_names)):
         # Find duplicate names
@@ -39,7 +39,7 @@ class Agent:
         self.conversation = Conversation()
         self.conversation.add_message(SystemMessage(content=system_prompt))
 
-        _check_tools(model_configuration.tools)
+        check_tools(model_configuration.tools)
         self.tools = model_configuration.tools
 
     async def process(self, user_message: str) -> list[Message]:

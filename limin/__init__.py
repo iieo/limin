@@ -1,4 +1,4 @@
-from .agent import Agent
+from .agent import Agent, check_tools
 
 from .base import (
     get_first_element,
@@ -29,6 +29,7 @@ from .completion import (
 __all__ = [
     # from agent
     "Agent",
+    "check_tools"
     # from base
     "get_first_element",
     "get_last_element",
