@@ -1,9 +1,9 @@
 import asyncio
-from limin import generate_text_completions
+from limin import generate_completions
 
 
 async def main():
-    completions = await generate_text_completions(
+    completions = await generate_completions(
         [
             "What is the capital of France?",
             "What is the capital of Germany?",

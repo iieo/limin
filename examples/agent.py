@@ -54,10 +54,13 @@ get_calculator_tool = Tool(
 
 
 async def main():
-    model_configuration = ModelConfiguration(model="gpt-4o", temperature=1.0)
+    model_configuration = ModelConfiguration(
+        model="gpt-5-nano",
+        temperature=1.0,
+        tools=[get_weather_tool, get_calculator_tool],
+    )
     agent = Agent(
         system_prompt="You are a helpful assistant.",
-        tools=[get_weather_tool, get_calculator_tool],
         model_configuration=model_configuration,
     )
 

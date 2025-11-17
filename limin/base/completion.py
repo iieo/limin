@@ -1,17 +1,20 @@
-from .logprobs import TokenLogProb, format_token_log_probs
-from .message import AssistantMessage
+from typing import Generic, TypeVar
 from pydantic import BaseModel
+from .logprobs import TokenLogProb, format_token_log_probs
+from .message import AssistantMessage, ToolCall
+from .conversation import Conversation
 
 
-class TextCompletion(BaseModel):
+T = TypeVar("T")
+
+
+class Completion(BaseModel, Generic[T]):
+    content: T | str
     model: str
-    content: str
     start_time: float
     end_time: float
-
-    """
-    A list containing the most likely tokens and their log probabilities for each token position in the message.
-    """
+    conversation: Conversation
+    tool_calls: list[ToolCall]
     full_token_log_probs: list[list[TokenLogProb]] | None = None
 
     @property
@@ -44,6 +47,6 @@ class TextCompletion(BaseModel):
     def to_assistant_message(self) -> AssistantMessage:
         return AssistantMessage(
             role="assistant",
-            content=self.content,
-            tool_calls=None,
+            content=str(self.content) if self.content is not None else None,
+            tool_calls=self.tool_calls,
         )

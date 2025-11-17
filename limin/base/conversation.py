@@ -1,7 +1,8 @@
 from pydantic import BaseModel, Field
-from .message import Message, SystemMessage, UserMessage, AssistantMessage
+from .message import Message, SystemMessage, UserMessage, AssistantMessage, ToolMessage
 from .base_util import get_last_element
 from openai.types.chat import ChatCompletionMessageParam
+import json
 
 
 class Conversation(BaseModel):
@@ -64,6 +65,50 @@ class Conversation(BaseModel):
             markdown_str += f"## {message.role.capitalize()} \n"
             markdown_str += f"{message.content}\n\n"
         return markdown_str.strip()
+
+    def to_evaluation_format(self, include_metadata: bool = True) -> str:
+        """
+        Generate a structured format specifically for LLM evaluation.
+        Clearly shows tool calls and their results.
+        """
+        output = []
+
+        if include_metadata:
+            output.append("# Conversation Transcript for Evaluation\n")
+            output.append(f"**Total Messages:** {len(self.messages)}\n")
+            output.append("---\n")
+
+        for i, message in enumerate(self.messages):
+            if isinstance(message, SystemMessage):
+                output.append(f"### System Instruction\n")
+                output.append(f"{message.content}\n\n")
+
+            elif isinstance(message, UserMessage):
+                output.append(f"### User Input\n")
+                output.append(f"{message.content}\n\n")
+
+            elif isinstance(message, AssistantMessage):
+                output.append(f"### Assistant Response\n")
+                if message.content:
+                    output.append(f"**Text Response:** {message.content}\n")
+
+                if message.tool_calls:
+                    output.append("\n**🔧 TOOL INVOCATIONS:**\n")
+                    for tool_call in message.tool_calls:
+                        output.append(f"\n**Tool Called:** `{tool_call.name}`\n")
+                        output.append(f"- **Call ID:** `{tool_call.id}`\n")
+                        output.append(f"- **Arguments Passed:**\n")
+                        output.append("```json\n")
+                        output.append(json.dumps(tool_call.arguments, indent=2))
+                        output.append("\n```\n")
+                output.append("\n")
+
+            elif isinstance(message, ToolMessage):
+                output.append(f"### Tool Execution Result\n")
+                output.append(f"**Response for Call ID:** `{message.tool_call_id}`\n")
+                output.append(f"**Result:**\n```\n{message.content}\n```\n\n")
+
+        return "".join(output)
 
     @property
     def openai_messages(self) -> list[ChatCompletionMessageParam]:

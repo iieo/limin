@@ -41,11 +41,11 @@ You will need to provide the `OPENAI_API_KEY` environment variable.
 Now, you can create a simple script that generates a text completion for a user prompt:
 
 ```python
-from limin import generate_text_completion
+from limin import generate_completion
 
 
 async def main():
-    completion = await generate_text_completion("What is the capital of France?")
+    completion = await generate_completion("What is the capital of France?")
     print(completion.content)
 
 
@@ -86,7 +86,7 @@ You can also pass the API key to the various functions by passing the `api_key` 
 For example:
 
 ```python
-completion = await generate_text_completion(
+completion = await generate_completion(
     "What is the capital of France?",
     api_key="your_api_key",
 )
@@ -96,19 +96,19 @@ completion = await generate_text_completion(
 
 ### Generating a Single Text Completion
 
-You can generate a single text completion for a user prompt by calling the `generate_text_completion` function:
+You can generate a single text completion for a user prompt by calling the `generate_completion` function:
 
 ```python
-from limin import generate_text_completion
+from limin import generate_completion
 
-completion = await generate_text_completion("What is the capital of France?")
+completion = await generate_completion("What is the capital of France?")
 print(completion.content)
 ```
 
-You can generate a single text completion for a conversation by calling the `generate_text_completion_for_conversation` function:
+You can generate a single text completion for a conversation by calling the `generate_completion_for_conversation` function:
 
 ```python
-from limin import generate_text_completion_for_conversation
+from limin import generate_completion_for_conversation
 
 conversation = Conversation(
     messages=[
@@ -118,18 +118,18 @@ conversation = Conversation(
         Message(role="user", content="What is the capital of Germany?"),
     ]
 )
-completion = await generate_text_completion_for_conversation(conversation)
+completion = await generate_completion_for_conversation(conversation)
 print(completion.content)
 ```
 
 ### Generating Multiple Text Completions
 
-You can generate multiple text completions for a list of user prompts by calling the `generate_text_completions` function:
+You can generate multiple text completions for a list of user prompts by calling the `generate_completions` function:
 
 ```python
-from limin import generate_text_completions
+from limin import generate_completions
 
-completions = await generate_text_completions([
+completions = await generate_completions([
     "What is the capital of France?",
     "What is the capital of Germany?",
 ])
@@ -138,13 +138,13 @@ for completion in completions:
     print(completion.content)
 ```
 
-It's important to note that the `generate_text_completions` function will parallelize the generation of the text completions.
+It's important to note that the `generate_completions` function will parallelize the generation of the text completions.
 The number of parallel completions is controlled by the `n_parallel` parameter (which defaults to 5).
 
 For example, if you want to generate 4 text completions with 2 parallel completions, you can do the following:
 
 ```python
-completions = await generate_text_completions([
+completions = await generate_completions([
     "What is the capital of France?",
     "What is the capital of Germany?",
     "What is the capital of Italy?",
@@ -155,10 +155,10 @@ for completion in completions:
     print(completion.content)
 ```
 
-You can also generate multiple text completions for a list of conversations by calling the `generate_text_completions_for_conversations` function:
+You can also generate multiple text completions for a list of conversations by calling the `generate_completions_for_conversations` function:
 
 ```python
-from limin import generate_text_completions_for_conversations
+from limin import generate_completions_for_conversations
 
 first_conversation = Conversation(
     messages=[
@@ -174,7 +174,7 @@ second_conversation = Conversation(
     ]
 )
 
-completions = await generate_text_completions_for_conversations([
+completions = await generate_completions_for_conversations([
     first_conversation,
     second_conversation,
 ], n_parallel=2)
@@ -183,7 +183,7 @@ for completion in completions:
     print(completion.content)
 ```
 
-Note that both the `generate_text_completions` and `generate_text_completions_for_conversations` functions will show a progress bar if the `show_progress` parameter is set to `True` (which it is by default).
+Note that both the `generate_completions` and `generate_completions_for_conversations` functions will show a progress bar if the `show_progress` parameter is set to `True` (which it is by default).
 You can suppress this by setting the `show_progress` parameter to `False`.
 
 You can find the full example in the [`examples/multiple_completions.py`](examples/multiple_completions.py) file.
@@ -192,23 +192,23 @@ You can find the full example in the [`examples/multiple_completions.py`](exampl
 
 You can generate structured completions by calling the equivalent `structured_completion` functions.
 
-For example, you can generate a structured completion for a single user prompt by calling the `generate_structured_completion` function:
+For example, you can generate a structured completion for a single user prompt by calling the `generate_completion` function:
 
 ```python
-from limin import generate_structured_completion
+from limin import generate_completion
 
 # Note that you need to create a pydantic model containing the expected completion
 class CapitalModel(BaseModel):
     capital: str
 
-completion = await generate_structured_completion(
+completion = await generate_completion(
     "What is the capital of France?",
     response_model=CapitalModel,
 )
 print(completion.content.capital)
 ```
 
-You can similarly call the `generate_structured_completion_for_conversation`, `generate_structured_completions_for_conversations`, and `generate_structured_completions` functions.
+You can similarly call the `generate_completion_for_conversation`, `generate_completions_for_conversations`, and `generate_completions` functions.
 Structured completions also support extracting log probabilities of tokens.
 
 You can find the full example in the [`examples/structured_completion.py`](examples/structured_completion.py) file.
@@ -256,7 +256,7 @@ You can extract the log probabilities of the tokens by accessing the `token_log_
 You will need to pass the `log_probs` parameter to the generation function together with the `top_log_probs` parameter to get the most likely tokens:
 
 ```python
-completion = await generate_text_completion(
+completion = await generate_completion(
     "What is 2+2?",
     log_probs=True,
     top_log_probs=10,
@@ -341,7 +341,7 @@ model_configuration = ModelConfiguration(
     top_log_probs=10,
 )
 
-completion = await generate_text_completion(
+completion = await generate_completion(
     "What is 2+2?",
     model_configuration=model_configuration,
 )

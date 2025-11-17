@@ -10,8 +10,7 @@ from .message import (
     ToolCall,
 )
 from .model_configuration import ModelConfiguration, DEFAULT_MODEL_CONFIGURATION
-from .structured_completion import StructuredCompletion
-from .text_completion import TextCompletion
+from .completion import Completion
 from .tool import Tool
 
 __all__ = [
